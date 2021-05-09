@@ -4,7 +4,7 @@
 #include "src/module.h"
 
 test(plus) {
-    do_assert("plus(3, 7) should equal 10", plus(3,7) == 12);
+    do_assert("plus(3, 7) should equal 10", plus(3,7) == 10);
     return PASS;
 }
 
