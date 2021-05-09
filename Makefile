@@ -1,3 +1,7 @@
+#---------------------------------------
+# Vars
+#---------------------------------------
+
 CLEANUP := rm -f
 
 PATH_SRC = src/
@@ -17,7 +21,6 @@ PATH_TEST_RESULTS = build/test/results/
 BUILD_PATHS = $(PATH_BUILD) $(PATH_BIN) $(PATH_DEPS) $(PATH_OBJS) \
 	      $(PATH_TEST_BIN) $(PATH_TEST_DEPS) $(PATH_TEST_OBJS) $(PATH_TEST_RESULTS)
 
-CREATE_BUILD_PATHS := $(shell mkdir -p $(BUILD_PATHS))
 
 SRC  = $(wildcard $(PATH_SRC)*.c)
 OBJS = $(patsubst $(PATH_SRC)%.c,$(PATH_OBJS)%.o,$(SRC))
@@ -34,23 +37,31 @@ TEST_CFLAGS = -g -Werror -I. -I$(PATH_SRC) -I$(PATH_TEST)
 DEP_FLAGS   = -MM -MG -MF
 
 #---------------------------------------
-# Program
+# Init
 #---------------------------------------
 
-program: $(PATH_BIN)program
+CREATE_BUILD_PATHS := $(shell mkdir -p $(BUILD_PATHS))
+
+#---------------------------------------
+# Target: dist 
+#---------------------------------------
+
+.PHONY: dist
+
+dist: $(PATH_BIN)program
 
 $(PATH_BIN)program: build
 	$(CC) $(CFLAGS) -o $(PATH_BIN)program $(OBJS)
 
 #---------------------------------------
-# Run
+# Target: run
 #---------------------------------------
 
-run: program
+run: dist
 	@$(PATH_BIN)program
 
 #---------------------------------------
-# Build 
+# Target: build 
 #---------------------------------------
 
 build: $(OBJS)
@@ -59,7 +70,7 @@ $(PATH_OBJS)%.o: $(PATH_SRC)%.c
 	$(CC) -c $(CFLAGS) $< -o $@
 
 #---------------------------------------
-# Deps
+# Gen & Include build deps
 #---------------------------------------
 
 include $(DEPS)
@@ -71,11 +82,16 @@ $(PATH_DEPS)%.d: $(PATH_SRC)%.c
 	rm $@.1;
 
 #---------------------------------------
-# Test
+# Target: test
 #---------------------------------------
 
-test: $(TEST_RESULTS)
-	@! grep -s FAILED $(PATH_TEST_RESULTS)*.txt
+.PHONY: test
+
+test:
+	@$(MAKE) run_test --silent
+
+run_test: $(TEST_RESULTS)
+	@-! grep -s FAILED $(PATH_TEST_RESULTS)*.txt
 
 $(PATH_TEST_RESULTS)%.txt: $(PATH_TEST_BIN)%.out
 	@-./$< > $@ 2>&1
@@ -87,7 +103,7 @@ $(PATH_TEST_OBJS)%.o: $(PATH_TEST)%.c
 	$(CC) -c $(TEST_CFLAGS) $< -o $@
 
 #---------------------------------------
-# Deps (Test)
+# Gen & Include test deps
 #---------------------------------------
 
 include $(TEST_DEPS)
@@ -99,13 +115,17 @@ $(PATH_TEST_DEPS)%.d: $(PATH_TEST)%.c
 	rm $@.1;
 
 #--------------------------------------
-# Clean
+# Target: clean
 #---------------------------------------
 
 .PHONY: clean
 
 clean:
-	$(CLEANUP) -r $(PATH_BUILD)
+	@$(CLEANUP) -r $(PATH_BUILD)
+
+#--------------------------------------
+# .PRECIOUS
+#---------------------------------------
 
 .PRECIOUS: $(PATH_DEPENDS)%.d
 .PRECIOUS: $(PATH_OBJS)%.o
