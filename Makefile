@@ -2,8 +2,6 @@
 # Vars
 #---------------------------------------
 
-CLEANUP := rm -f
-
 PATH_SRC = src/
 
 PATH_BUILD = build/
@@ -19,8 +17,8 @@ PATH_TEST_OBJS    = build/test/objs/
 PATH_TEST_RESULTS = build/test/results/
 
 BUILD_PATHS = $(PATH_BUILD) $(PATH_BIN) $(PATH_DEPS) $(PATH_OBJS) \
-	      $(PATH_TEST_BIN) $(PATH_TEST_DEPS) $(PATH_TEST_OBJS) $(PATH_TEST_RESULTS)
-
+	      $(PATH_TEST_BIN) $(PATH_TEST_DEPS) $(PATH_TEST_OBJS) \
+	      $(PATH_TEST_RESULTS)
 
 SRC  = $(wildcard $(PATH_SRC)*.c)
 OBJS = $(patsubst $(PATH_SRC)%.c,$(PATH_OBJS)%.o,$(SRC))
@@ -34,37 +32,22 @@ CC          = gcc
 LINK        = gcc
 CFLAGS      = -g -Werror -I. -I$(PATH_SRC)
 TEST_CFLAGS = -g -Werror -I. -I$(PATH_SRC) -I$(PATH_TEST_SRC)
-DEPS_FLAGS   = -MM -MG -MF
+DEPS_FLAGS  = -MM -MG -MF
 
 #---------------------------------------
-# Init
+# Make sure build/ exists
 #---------------------------------------
 
 CREATE_BUILD_PATHS := $(shell mkdir -p $(BUILD_PATHS))
 
 #---------------------------------------
-# Target: dist 
-#---------------------------------------
-
-.PHONY: dist
-
-dist: $(PATH_BIN)program
-
-$(PATH_BIN)program: build
-	$(CC) $(CFLAGS) -o $(PATH_BIN)program $(OBJS)
-
-#---------------------------------------
-# Target: run
-#---------------------------------------
-
-run: dist
-	@$(PATH_BIN)program
-
-#---------------------------------------
 # Target: build 
 #---------------------------------------
 
-build: $(OBJS)
+build: $(PATH_BIN)program
+
+$(PATH_BIN)program: $(OBJS)
+	$(CC) $(CFLAGS) -o $(PATH_BIN)program $(OBJS)
 
 $(PATH_OBJS)%.o: $(PATH_SRC)%.c
 	$(CC) -c $(CFLAGS) $< -o $@
@@ -80,6 +63,15 @@ $(PATH_DEPS)%.d: $(PATH_SRC)%.c
 	$(CC) $(DEPS_FLAGS) $@.1 $<; \
 	sed 's,\($*\)\.o[ :]*,$(PATH_OBJS)\1.o $@ : ,g' < $@.1 > $@; \
 	rm $@.1;
+
+#---------------------------------------
+# Target: run
+#---------------------------------------
+
+.PHONY: run
+
+run: build
+	@$(PATH_BIN)program
 
 #---------------------------------------
 # Target: test
@@ -121,7 +113,7 @@ $(PATH_TEST_DEPS)%.d: $(PATH_TEST_SRC)%.c
 .PHONY: clean
 
 clean:
-	@$(CLEANUP) -r $(PATH_BUILD)
+	@rm -rf $(PATH_BUILD)
 
 #--------------------------------------
 # .PRECIOUS
