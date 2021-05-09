@@ -11,7 +11,7 @@ PATH_BIN   = build/bin/
 PATH_DEPS  = build/depends/
 PATH_OBJS  = build/objs/
 
-PATH_TEST = test/
+PATH_TEST_SRC = test/
 
 PATH_TEST_BIN     = build/test/bin/
 PATH_TEST_DEPS    = build/test/depends/
@@ -26,15 +26,15 @@ SRC  = $(wildcard $(PATH_SRC)*.c)
 OBJS = $(patsubst $(PATH_SRC)%.c,$(PATH_OBJS)%.o,$(SRC))
 DEPS = $(patsubst $(PATH_SRC)%.c,$(PATH_DEPS)%.d,$(SRC))
 
-TESTS        = $(wildcard $(PATH_TEST)*.c)
-TEST_DEPS    = $(patsubst $(PATH_TEST)%.c,$(PATH_TEST_DEPS)%.d,$(TESTS))
-TEST_RESULTS = $(patsubst $(PATH_TEST)%.c,$(PATH_TEST_RESULTS)%.txt,$(TESTS))
+SRC_TEST     = $(wildcard $(PATH_TEST_SRC)*.c)
+DEPS_TEST    = $(patsubst $(PATH_TEST_SRC)%.c,$(PATH_TEST_DEPS)%.d,$(SRC_TEST))
+TEST_RESULTS = $(patsubst $(PATH_TEST_SRC)%.c,$(PATH_TEST_RESULTS)%.txt,$(SRC_TEST))
 
 CC          = gcc
 LINK        = gcc
 CFLAGS      = -g -Werror -I. -I$(PATH_SRC)
-TEST_CFLAGS = -g -Werror -I. -I$(PATH_SRC) -I$(PATH_TEST)
-DEP_FLAGS   = -MM -MG -MF
+TEST_CFLAGS = -g -Werror -I. -I$(PATH_SRC) -I$(PATH_TEST_SRC)
+DEPS_FLAGS   = -MM -MG -MF
 
 #---------------------------------------
 # Init
@@ -77,7 +77,7 @@ include $(DEPS)
 
 $(PATH_DEPS)%.d: $(PATH_SRC)%.c
 	@set -e; rm -f $@; \
-	$(CC) $(DEP_FLAGS) $@.1 $<; \
+	$(CC) $(DEPS_FLAGS) $@.1 $<; \
 	sed 's,\($*\)\.o[ :]*,$(PATH_OBJS)\1.o $@ : ,g' < $@.1 > $@; \
 	rm $@.1;
 
@@ -99,18 +99,18 @@ $(PATH_TEST_RESULTS)%.txt: $(PATH_TEST_BIN)%.out
 $(PATH_TEST_BIN)test_%.out: $(PATH_TEST_OBJS)test_%.o $(PATH_OBJS)%.o
 	$(LINK) -o $@ $^
 
-$(PATH_TEST_OBJS)%.o: $(PATH_TEST)%.c
+$(PATH_TEST_OBJS)%.o: $(PATH_TEST_SRC)%.c
 	$(CC) -c $(TEST_CFLAGS) $< -o $@
 
 #---------------------------------------
 # Gen & Include test deps
 #---------------------------------------
 
-include $(TEST_DEPS)
+include $(DEPS_TEST)
 
-$(PATH_TEST_DEPS)%.d: $(PATH_TEST)%.c
+$(PATH_TEST_DEPS)%.d: $(PATH_TEST_SRC)%.c
 	@set -e; rm -f $@; \
-	$(CC) $(DEP_FLAGS) $@.1 $<; \
+	$(CC) $(DEPS_FLAGS) $@.1 $<; \
 	sed 's,\($*\)\.o[ :]*,$(PATH_TEST_OBJS)\1.o $@ : ,g' < $@.1 > $@; \
 	rm $@.1;
 
