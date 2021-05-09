@@ -29,10 +29,8 @@ TEST_RESULTS = $(patsubst $(PATH_TEST)%.c,$(PATH_TEST_RESULTS)%.txt,$(TESTS))
 
 CC          = gcc
 LINK        = gcc
-
 CFLAGS      = -g -Werror -I. -I$(PATH_SRC)
 TEST_CFLAGS = -g -Werror -I. -I$(PATH_SRC) -I$(PATH_TEST)
-
 DEP_FLAGS   = -MM -MG -MF
 
 #---------------------------------------
@@ -49,7 +47,7 @@ $(PATH_BIN)program: build
 #---------------------------------------
 
 run: program
-	$(PATH_BIN)program
+	@$(PATH_BIN)program
 
 #---------------------------------------
 # Build 
@@ -67,7 +65,7 @@ $(PATH_OBJS)%.o: $(PATH_SRC)%.c
 include $(DEPS)
 
 $(PATH_DEPS)%.d: $(PATH_SRC)%.c
-	set -e; rm -f $@; \
+	@set -e; rm -f $@; \
 	$(CC) $(DEP_FLAGS) $@.1 $<; \
 	sed 's,\($*\)\.o[ :]*,$(PATH_OBJS)\1.o $@ : ,g' < $@.1 > $@; \
 	rm $@.1;
@@ -77,10 +75,10 @@ $(PATH_DEPS)%.d: $(PATH_SRC)%.c
 #---------------------------------------
 
 test: $(TEST_RESULTS)
-	! grep -s FAILED $(PATH_TEST_RESULTS)*.txt
+	@! grep -s FAILED $(PATH_TEST_RESULTS)*.txt
 
 $(PATH_TEST_RESULTS)%.txt: $(PATH_TEST_BIN)%.out
-	-./$< > $@ 2>&1
+	@-./$< > $@ 2>&1
 
 $(PATH_TEST_BIN)test_%.out: $(PATH_TEST_OBJS)test_%.o $(PATH_OBJS)%.o
 	$(LINK) -o $@ $^
@@ -95,7 +93,7 @@ $(PATH_TEST_OBJS)%.o: $(PATH_TEST)%.c
 include $(TEST_DEPS)
 
 $(PATH_TEST_DEPS)%.d: $(PATH_TEST)%.c
-	set -e; rm -f $@; \
+	@set -e; rm -f $@; \
 	$(CC) $(DEP_FLAGS) $@.1 $<; \
 	sed 's,\($*\)\.o[ :]*,$(PATH_TEST_OBJS)\1.o $@ : ,g' < $@.1 > $@; \
 	rm $@.1;
