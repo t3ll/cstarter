@@ -1,2 +1,2 @@
-# cemptyproject
-C empty project
+# C starter
+empty C project
